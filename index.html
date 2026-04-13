@@ -231,7 +231,8 @@
       <div class="score-display">স্কোর  <strong id="final-score">0</strong></div>
       <div class="new-high" id="new-high" style="display:none">★  নতুন রেকর্ড!</div>
       <div class="best-display">সেরা  <span id="dead-best">0</span></div>
-      <div class="best-display" id="collect-summary">Rice: 0 · Cake: 0 · Sweet: 0</div>
+      <!-- <div class="best-display" id="collect-summary">Rice: 0 · Cake: 0 · Sweet: 0</div> -->
+      <div class="best-display" id="collect-summary">ভাত: 0 · পিঠা: 0 · মিষ্টি: 0</div>
       <button class="btn btn-crimson" id="btn-restart">↺  আবার খেলো</button>
     </div>
   </div>
@@ -436,8 +437,8 @@ function spawnCollectible() {
   collectibles.push({
     type,
     img,
-    size: 36,
-    x: CANVAS_WIDTH + rand(40, 120),
+    size: 48,
+    x: CANVAS_WIDTH + rand(80, 100),   //hehehe
     y: GROUND_Y - 150
   });
 }
@@ -534,7 +535,7 @@ function showDead(finalScore) {
   newHighEl.style.display  = (finalScore >= highScore && finalScore > 0) ? "block" : "none";
 
   collectSummaryEl.textContent =
-    `Rice: ${collectedCounts.rice} · Cake: ${collectedCounts.cake} · Sweet: ${collectedCounts.sweet}`;
+  `ভাত: ${collectedCounts.rice} · কেক: ${collectedCounts.cake} · মিষ্টি: ${collectedCounts.sweet}`;
 }
 
 // ============================================================
