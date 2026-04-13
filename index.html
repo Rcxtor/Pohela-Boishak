@@ -243,10 +243,16 @@
 // ============================================================
 
 let farBgImg = new Image();
-// let nearBgImg = new Image();
 let roadImg = new Image();
 let skyImg = new Image();
 const sunImg = new Image();
+const riceImg = new Image();
+const cakeImg = new Image();
+const sweetImg = new Image();
+
+riceImg.src = "assets/rice.png";
+cakeImg.src = "assets/cake.png";
+sweetImg.src = "assets/sweet.png";
 
 let nearImages = [];
 
@@ -352,12 +358,11 @@ function createPlayer() {
 // OBSTACLES
 // ============================================================
 function createObstacle(x, forcedType = null) {
-  const types = ["pot", "boat", "rangoli", "banner", "drum"];
+  const types = ["pot", "rangoli", "banner", "drum"];
   const type  = forcedType || types[Math.floor(Math.random() * types.length)];
 
   const cfg = {
     pot:     { w: 28, h: 44, color: "#B5531A" },
-    boat:    { w: 54, h: 34, color: "#7B4F1E" },
     rangoli: { w: 32, h: 32, color: "#C8102E" },
     banner:  { w: 22, h: 68, color: "#FF6B2B" },
     drum:    { w: 36, h: 42, color: "#8B3A2A" },
@@ -376,7 +381,7 @@ function createObstacle(x, forcedType = null) {
 function createObstaclePattern(spawnX) {
   const roll = Math.random();
   if (roll < 0.35) return [createObstacle(spawnX)];
-  if (roll < 0.60) return [createObstacle(spawnX, "boat")];
+  // if (roll < 0.60) return [createObstacle(spawnX, "boat")];
   if (roll < 0.75) return [createObstacle(spawnX, "banner")];
   if (roll < 0.88) {
     const gap = rand(85, 115);
@@ -889,45 +894,6 @@ function drawObstacle(o) {
     ctx.beginPath();
     ctx.arc(14, 26, 8, 0.4, Math.PI - 0.4);
     ctx.stroke();
-
-  } else if (o.type === "boat") {
-    ctx.fillStyle = "#6B3A18";
-    ctx.beginPath();
-    ctx.moveTo(0, 18);
-    ctx.quadraticCurveTo(27, 38, 54, 18);
-    ctx.lineTo(50, 26);
-    ctx.quadraticCurveTo(27, 40, 4, 26);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.lineWidth = 1;
-    for (let lx = 10; lx < 50; lx += 12) {
-      ctx.beginPath();
-      ctx.moveTo(lx, 26);
-      ctx.lineTo(lx, 32);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = "#4A2810";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(27, 18); ctx.lineTo(27, 0); ctx.stroke();
-
-    ctx.fillStyle = C.crimson;
-    ctx.beginPath();
-    ctx.moveTo(27, 0);
-    ctx.lineTo(48, 10);
-    ctx.lineTo(27, 20);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255,248,231,0.6)";
-    ctx.beginPath();
-    ctx.moveTo(27, 0);
-    ctx.lineTo(38, 8);
-    ctx.lineTo(27, 14);
-    ctx.closePath();
-    ctx.fill();
 
   } else if (o.type === "rangoli") {
     for (let i = 3; i >= 0; i--) {
