@@ -231,6 +231,7 @@
       <div class="score-display">স্কোর  <strong id="final-score">0</strong></div>
       <div class="new-high" id="new-high" style="display:none">★  নতুন রেকর্ড!</div>
       <div class="best-display">সেরা  <span id="dead-best">0</span></div>
+      <div class="best-display" id="collect-summary">Rice: 0 · Cake: 0 · Sweet: 0</div>
       <button class="btn btn-crimson" id="btn-restart">↺  আবার খেলো</button>
     </div>
   </div>
@@ -255,6 +256,14 @@ cakeImg.src = "assets/cake.png";
 sweetImg.src = "assets/sweet.png";
 
 let nearImages = [];
+let collectibles = [];
+let collectibleSpawnTimer = 0;
+
+let collectedCounts = {
+  rice: 0,
+  cake: 0,
+  sweet: 0
+};
 
 for (let i = 1; i <= 3; i++) { //number
   let img = new Image();
@@ -318,6 +327,7 @@ const overlayDead  = document.getElementById("overlay-dead");
 const finalScoreEl = document.getElementById("final-score");
 const deadBestEl   = document.getElementById("dead-best");
 const newHighEl    = document.getElementById("new-high");
+const collectSummaryEl = document.getElementById("collect-summary");
 
 // ============================================================
 // GAME STATE
@@ -414,6 +424,34 @@ function createParticleBurst(x, y, color, count = 14) {
   return out;
 }
 
+function spawnCollectible() {
+  const types = ["rice", "cake", "sweet"];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  let img;
+  if (type === "rice") img = riceImg;
+  if (type === "cake") img = cakeImg;
+  if (type === "sweet") img = sweetImg;
+
+  collectibles.push({
+    type,
+    img,
+    size: 36,
+    x: CANVAS_WIDTH + rand(40, 120),
+    y: GROUND_Y - 150
+  });
+}
+
+function checkCollectibleCollision(p, c) {
+  const margin = 6;
+  return (
+    p.x + margin < c.x + c.size &&
+    p.x + PLAYER_W - margin > c.x &&
+    p.y + margin < c.y + c.size &&
+    p.y + PLAYER_H - margin > c.y
+  );
+}
+
 // ============================================================
 // BACKGROUND ELEMENTS
 // ============================================================
@@ -494,6 +532,9 @@ function showDead(finalScore) {
   finalScoreEl.textContent = finalScore;
   deadBestEl.textContent   = highScore;
   newHighEl.style.display  = (finalScore >= highScore && finalScore > 0) ? "block" : "none";
+
+  collectSummaryEl.textContent =
+    `Rice: ${collectedCounts.rice} · Cake: ${collectedCounts.cake} · Sweet: ${collectedCounts.sweet}`;
 }
 
 // ============================================================
@@ -504,6 +545,15 @@ function startGame() {
   obstacles = [];
   particles = [];
   trails    = [];
+  collectibles = [];
+  collectibleSpawnTimer = 0;
+
+  collectedCounts = {
+    rice: 0,
+    cake: 0,
+    sweet: 0
+  };
+
   speed     = INITIAL_SPEED;
   frame     = 0;
   score     = 0;
@@ -617,6 +667,27 @@ function update() {
 
   score++;
   if (score % 6 === 0) scoreVal.textContent = Math.floor(score / 6);
+  collectibleSpawnTimer++;
+
+if (collectibleSpawnTimer >= 120) {
+  spawnCollectible();
+  collectibleSpawnTimer = 0;
+}
+
+for (let i = collectibles.length - 1; i >= 0; i--) {
+  const c = collectibles[i];
+  c.x -= speed;
+
+  if (checkCollectibleCollision(player, c)) {
+    collectedCounts[c.type]++;
+    collectibles.splice(i, 1);
+    continue;
+  }
+
+  if (c.x + c.size < -40) {
+    collectibles.splice(i, 1);
+  }
+}
 
   for (const obs of obstacles) {
     if (checkCollision(player, obs)) {
@@ -767,6 +838,13 @@ function drawGround() {
   const roadHeight = 450;
   const roadY = CANVAS_HEIGHT - roadHeight;
   roadX = drawRepeatingImage(roadImg, roadX, roadY, roadHeight); //hehe
+}
+
+function drawCollectibles() {
+  for (const c of collectibles) {
+    if (!c.img.complete) continue;
+    ctx.drawImage(c.img, c.x, c.y, c.size, c.size);
+  }
 }
 
 function drawPlayer(p) {
@@ -987,6 +1065,7 @@ function draw() {
 
   drawGround();
 
+  drawCollectibles();
   for (const obs of obstacles) drawObstacle(obs);
 
   drawPlayer(player);
