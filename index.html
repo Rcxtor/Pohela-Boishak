@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boishak Runner — শুভ নববর্ষ</title>
+  <style>
+    /* ── BOISHAK PALETTE ─────────────────────────────────────────
+       Replacing neon cyan/pink with festive Bengali colors:
+       saffron, crimson, turmeric yellow, mango green, earth brown
+    ────────────────────────────────────────────────────────────── */
+    :root {
+      --saffron:  #FF6B2B;
+      --crimson:  #C8102E;
+      --turmeric: #F5C518;
+      --green:    #3A7D44;
+      --mango:    #F7A825;
+      --sky:      #87CEEB;
+      --earth:    #8B5E3C;
+      --white:    #FFF8E7;
+      --bg:       #FDF3DC;
+      --font:     'Georgia', serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #e8d5a3;
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(200,16,46,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,107,43,0.08) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: var(--font);
+      user-select: none;
+    }
+
+    /* ── HUD ─────────────────────────────────────────────────── */
+    #hud {
+      display: none;
+      gap: 40px;
+      margin-bottom: 10px;
+      color: var(--crimson);
+      text-shadow: 0 1px 4px rgba(200,16,46,0.3);
+      font-size: 18px;
+      letter-spacing: 3px;
+      font-family: var(--font);
+    }
+
+    #game-wrap { position: relative; }
+
+    canvas {
+      display: block;
+      cursor: pointer;
+      border: 3px solid var(--crimson);
+      box-shadow:
+        0 0 0 1px var(--mango),
+        0 8px 40px rgba(200,16,46,0.25),
+        0 2px 12px rgba(245,197,24,0.2);
+      border-radius: 6px;
+      max-width: 100vw;
+    }
+
+    /* ── OVERLAYS ─────────────────────────────────────────────── */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      /* Alpona-style semi-transparent warm overlay */
+      background: rgba(253, 243, 220, 0.92);
+      backdrop-filter: blur(3px);
+    }
+    .overlay.visible { display: flex; }
+
+    /* Decorative alpona border on overlay */
+    .overlay::before {
+      content: '';
+      position: absolute;
+      inset: 12px;
+      border: 2px dashed rgba(200,16,46,0.25);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .overlay h1 {
+      font-size: 48px;
+      color: var(--crimson);
+      text-shadow: 2px 2px 0 var(--mango), 4px 4px 0 rgba(200,16,46,0.15);
+      letter-spacing: 4px;
+      font-weight: 900;
+      margin-bottom: 2px;
+      font-family: var(--font);
+    }
+
+    .overlay .bangla-title {
+      font-size: 22px;
+      color: var(--saffron);
+      letter-spacing: 3px;
+      margin-bottom: 6px;
+      font-family: var(--font);
+    }
+
+    .overlay .subtitle {
+      color: var(--earth);
+      font-size: 13px;
+      letter-spacing: 3px;
+      margin-bottom: 28px;
+      font-family: var(--font);
+    }
+
+    .overlay h2 {
+      font-size: 40px;
+      color: var(--crimson);
+      text-shadow: 2px 2px 0 rgba(200,16,46,0.2);
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+      font-family: var(--font);
+    }
+
+    .overlay .score-display {
+      color: var(--earth);
+      font-size: 22px;
+      letter-spacing: 3px;
+      margin-bottom: 4px;
+    }
+
+    .overlay .new-high {
+      color: var(--green);
+      font-size: 14px;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+
+    .overlay .best-display {
+      color: #99785588;
+      font-size: 14px;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+    }
+
+    /* ── BUTTONS ──────────────────────────────────────────────── */
+    .btn {
+      padding: 14px 48px;
+      background: transparent;
+      font-family: var(--font);
+      font-size: 17px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-radius: 4px;
+    }
+    .btn-saffron {
+      border: 2px solid var(--saffron);
+      color: var(--saffron);
+      text-shadow: 0 0 8px rgba(255,107,43,0.4);
+      box-shadow: 0 0 16px rgba(255,107,43,0.2);
+    }
+    .btn-crimson {
+      border: 2px solid var(--crimson);
+      color: var(--crimson);
+      text-shadow: 0 0 8px rgba(200,16,46,0.4);
+      box-shadow: 0 0 16px rgba(200,16,46,0.2);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.85;
+    }
+
+    .overlay .hint {
+      color: #99785588;
+      font-size: 12px;
+      letter-spacing: 2px;
+      margin-top: 18px;
+    }
+
+    /* Little flower decorations on overlay corners */
+    .overlay .corner-deco {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.35;
+    }
+    .overlay .corner-deco.tl { top: 20px; left: 22px; }
+    .overlay .corner-deco.tr { top: 20px; right: 22px; }
+    .overlay .corner-deco.bl { bottom: 20px; left: 22px; }
+    .overlay .corner-deco.br { bottom: 20px; right: 22px; }
+
+    #footer {
+      color: #99785566;
+      font-size: 11px;
+      margin-top: 12px;
+      letter-spacing: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="hud">
+    <span>স্কোর <strong id="score-val">0</strong></span>
+    <span>সেরা <strong id="best-val">0</strong></span>
+  </div>
+
+  <div id="game-wrap">
+    <canvas id="canvas" width="800" height="400"></canvas>
+
+    <!-- MENU -->
+    <div id="overlay-menu" class="overlay visible">
+      <span class="corner-deco tl">🌸</span>
+      <span class="corner-deco tr">🥭</span>
+      <span class="corner-deco bl">🪁</span>
+      <span class="corner-deco br">🌸</span>
+      <div class="bangla-title">শুভ নববর্ষ ১৪৩২</div>
+      <h1>BOISHAK RUN</h1>
+      <p class="subtitle">∞ বাংলা নববর্ষের দৌড়</p>
+      <button class="btn btn-saffron" id="btn-start">▶  শুরু করো</button>
+      <p class="hint">SPACE / TAP to jump · Double jump available</p>
+    </div>
+
+    <!-- DEAD -->
+    <div id="overlay-dead" class="overlay">
+      <span class="corner-deco tl">🌸</span>
+      <span class="corner-deco tr">🥭</span>
+      <span class="corner-deco bl">🪁</span>
+      <span class="corner-deco br">🌸</span>
+      <h2>খেলা শেষ!</h2>
+      <div class="score-display">স্কোর  <strong id="final-score">0</strong></div>
+      <div class="new-high" id="new-high" style="display:none">★  নতুন রেকর্ড!</div>
+      <div class="best-display">সেরা  <span id="dead-best">0</span></div>
+      <button class="btn btn-crimson" id="btn-restart">↺  আবার খেলো</button>
+    </div>
+  </div>
+
+  <div id="footer">POHELA BOISHAK · পহেলা বৈশাখ · ১লা বৈশাখ</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+let farBgImg = new Image();
+// let nearBgImg = new Image();
+let roadImg = new Image();
+let skyImg = new Image();
+const sunImg = new Image();
+
+let nearImages = [];
+
+for (let i = 1; i <= 3; i++) { //number
+  let img = new Image();
+  img.src = `assets/home${i}.png`; // near1.png, near2.png, near3.png
+  nearImages.push(img);
+}
+
+farBgImg.src = "assets/field.png";
+// nearBgImg.src = "assets/home.png";
+roadImg.src = "assets/road.png";
+skyImg.src = "assets/sky.png";
+sunImg.src = "assets/sun.png";
+
+
+let farBgX = 0;
+// let nearBgX = 0;
+let nearSegments = [];
+let roadX = 0;
+
+const CANVAS_WIDTH      = 800;
+const CANVAS_HEIGHT     = 400;
+const GROUND_Y          = 340;
+const PLAYER_X          = 110;
+const PLAYER_W          = 32;
+const PLAYER_H          = 46;
+const GRAVITY           = 0.58;
+const JUMP_FORCE        = -10.8;
+const DOUBLE_JUMP_FORCE = -10.2;
+const INITIAL_SPEED     = 5.0;
+const SPEED_INCREMENT   = 0.00012;
+const OBSTACLE_MIN_GAP  = 380;
+const OBSTACLE_MAX_GAP  = 760;
+
+const C = {
+  sky1:      "#87CEEB",
+  sky2:      "#FFA040",
+  sky3:      "#FFD580",
+  ground:    "#8B5E3C",
+  grass:     "#3A7D44",
+  saffron:   "#FF6B2B",
+  crimson:   "#C8102E",
+  turmeric:  "#F5C518",
+  mango:     "#F7A825",
+  white:     "#FFF8E7",
+  earthDark: "#5C3A1E",
+  mustard:   "#D4A017",
+};
+
+let coyoteTime = 0;
+
+// ============================================================
+// DOM REFS
+// ============================================================
+const canvas       = document.getElementById("canvas");
+const ctx          = canvas.getContext("2d");
+const hud          = document.getElementById("hud");
+const scoreVal     = document.getElementById("score-val");
+const bestVal      = document.getElementById("best-val");
+const overlayMenu  = document.getElementById("overlay-menu");
+const overlayDead  = document.getElementById("overlay-dead");
+const finalScoreEl = document.getElementById("final-score");
+const deadBestEl   = document.getElementById("dead-best");
+const newHighEl    = document.getElementById("new-high");
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let gameState   = "menu";
+let score       = 0;
+let highScore   = 0;
+let animFrameId = null;
+let player, obstacles, particles, trails, speed, frame;
+
+// Background layers — created once, reused
+let bgClouds   = createClouds();
+let bgKites    = createKites();
+let alpona     = createAlpona();
+let petals     = createPetals();
+
+// ============================================================
+// UTILITY
+// ============================================================
+function rand(min, max) { return Math.random() * (max - min) + min; }
+
+// ============================================================
+// CREATE PLAYER
+// ============================================================
+function createPlayer() {
+  return {
+    x: PLAYER_X, y: GROUND_Y - PLAYER_H,
+    vy: 0,
+    jumps: 0,
+    isOnGround: true,
+    scaleX: 1, scaleY: 1,
+    rotation: 0,
+    legPhase: 0,
+  };
+}
+
+// ============================================================
+// OBSTACLES
+// ============================================================
+function createObstacle(x, forcedType = null) {
+  const types = ["pot", "boat", "rangoli", "banner", "drum"];
+  const type  = forcedType || types[Math.floor(Math.random() * types.length)];
+
+  const cfg = {
+    pot:     { w: 28, h: 44, color: "#B5531A" },
+    boat:    { w: 54, h: 34, color: "#7B4F1E" },
+    rangoli: { w: 32, h: 32, color: "#C8102E" },
+    banner:  { w: 22, h: 68, color: "#FF6B2B" },
+    drum:    { w: 36, h: 42, color: "#8B3A2A" },
+  }[type];
+
+  return {
+    x,
+    y: GROUND_Y - cfg.h,
+    w: cfg.w,
+    h: cfg.h,
+    color: cfg.color,
+    type,
+  };
+}
+
+function createObstaclePattern(spawnX) {
+  const roll = Math.random();
+  if (roll < 0.35) return [createObstacle(spawnX)];
+  if (roll < 0.60) return [createObstacle(spawnX, "boat")];
+  if (roll < 0.75) return [createObstacle(spawnX, "banner")];
+  if (roll < 0.88) {
+    const gap = rand(85, 115);
+    return [createObstacle(spawnX, "pot"),
+            createObstacle(spawnX + gap, "drum")];
+  }
+  const gap = rand(90, 120);
+  return [createObstacle(spawnX, "rangoli"),
+          createObstacle(spawnX + gap, "pot")];
+}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+function createParticleBurst(x, y, color, count = 14) {
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + rand(-0.3, 0.3);
+    const sp    = rand(2, 6);
+    out.push({
+      x, y,
+      vx: Math.cos(angle) * sp,
+      vy: Math.sin(angle) * sp,
+      life: 1,
+      decay: rand(0.03, 0.07),
+      size: rand(2, 5),
+      color,
+    });
+  }
+  return out;
+}
+
+// ============================================================
+// BACKGROUND ELEMENTS
+// ============================================================
+function createPetals(count = 18) {
+  return Array.from({ length: count }, () => ({
+    x:     rand(0, CANVAS_WIDTH),
+    y:     rand(-40, GROUND_Y - 60),
+    vx:    rand(-0.4, -0.8),
+    vy:    rand(0.3, 0.7),
+    rot:   rand(0, Math.PI * 2),
+    rotV:  rand(-0.03, 0.03),
+    size:  rand(4, 9),
+    color: ["#FF6B2B","#C8102E","#F5C518","#F7A825","#FFB3C6"][Math.floor(rand(0,5))],
+    alpha: rand(0.5, 0.9),
+  }));
+}
+
+function createClouds() {
+  return Array.from({ length: 5 }, (_, i) => ({
+    x:     i * 180 + rand(0, 60),
+    y:     rand(30, 100),
+    scale: rand(0.7, 1.3),
+    speed: rand(0.3, 0.6),
+  }));
+}
+
+function createKites() {
+  return Array.from({ length: 4 }, (_, i) => ({
+    x:     150 + i * 180 + rand(-30, 30),
+    y:     rand(30, 130),
+    color: ["#C8102E","#F5C518","#FF6B2B","#3A7D44"][i],
+    speed: rand(0.4, 0.9),
+    sway:  rand(0, Math.PI * 2),
+    swaySpeed: rand(0.008, 0.018),
+  }));
+}
+
+function createAlpona() {
+  const pts = [];
+  for (let x = 0; x < CANVAS_WIDTH + 100; x += 50) {
+    pts.push({ x, phase: rand(0, Math.PI * 2) });
+  }
+  return pts;
+}
+
+// ============================================================
+// COLLISION
+// ============================================================
+function checkCollision(p, obs) {
+  const m = 7;
+  return p.x + m < obs.x + obs.w &&
+         p.x + PLAYER_W - m > obs.x &&
+         p.y + m < obs.y + obs.h &&
+         p.y + PLAYER_H - m > obs.y;
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function showMenu() {
+  gameState = "menu";
+  overlayMenu.classList.add("visible");
+  overlayDead.classList.remove("visible");
+  hud.style.display = "none";
+}
+
+function showPlaying() {
+  gameState = "playing";
+  overlayMenu.classList.remove("visible");
+  overlayDead.classList.remove("visible");
+  hud.style.display = "flex";
+}
+
+function showDead(finalScore) {
+  gameState = "dead";
+  overlayDead.classList.add("visible");
+  hud.style.display = "none";
+  finalScoreEl.textContent = finalScore;
+  deadBestEl.textContent   = highScore;
+  newHighEl.style.display  = (finalScore >= highScore && finalScore > 0) ? "block" : "none";
+}
+
+// ============================================================
+// START GAME
+// ============================================================
+function startGame() {
+  player    = createPlayer();
+  obstacles = [];
+  particles = [];
+  trails    = [];
+  speed     = INITIAL_SPEED;
+  frame     = 0;
+  score     = 0;
+  scoreVal.textContent = "0";
+  bestVal.textContent  = highScore;
+  showPlaying();
+  initNearBackground();
+}
+function initNearBackground() {
+  nearSegments = [];
+
+  let x = 0;
+
+  for (let i = 0; i < 3; i++) {
+    nearSegments.push({
+      img: nearImages[i],
+      x: x
+    });
+
+    // temporary width (will auto adjust later)
+    x += 700;
+  }
+}
+
+// ============================================================
+// JUMP
+// ============================================================
+function jump() {
+  if (gameState !== "playing") return;
+  if (player.jumps >= 2 && coyoteTime <= 0) return;
+
+  const isDouble = player.jumps === 1;
+  player.vy = isDouble ? DOUBLE_JUMP_FORCE : JUMP_FORCE;
+  player.jumps++;
+  player.isOnGround = false;
+  player.scaleX = 1.3;
+  player.scaleY = 0.7;
+
+  if (isDouble) {
+    particles.push(...createParticleBurst(
+      player.x + PLAYER_W / 2, player.y + PLAYER_H, C.turmeric, 16
+    ));
+  }
+}
+
+// ============================================================
+// UPDATE
+// ============================================================
+function update() {
+  if (gameState !== "playing") return;
+
+  frame++;
+  // speed += SPEED_INCREMENT;
+  
+
+  player.vy += GRAVITY;
+  player.y  += player.vy;
+
+  if (player.y >= GROUND_Y - PLAYER_H) {
+    player.y          = GROUND_Y - PLAYER_H;
+    player.vy         = 0;
+    player.jumps      = 0;
+    player.isOnGround = true;
+    player.scaleX = 0.7;
+    player.scaleY = 1.3;
+    coyoteTime    = 8;
+  } else {
+    player.isOnGround = false;
+    if (coyoteTime > 0) coyoteTime--;
+  }
+
+  player.scaleX += (1 - player.scaleX) * 0.18;
+  player.scaleY += (1 - player.scaleY) * 0.18;
+
+  const targetRot = player.isOnGround ? 0 : player.vy * 0.035;
+  player.rotation += (targetRot - player.rotation) * 0.14;
+
+  if (player.isOnGround) player.legPhase += speed * 0.18;
+
+  for (let i = 0; i < nearSegments.length; i++) {
+  let seg = nearSegments[i];
+
+  if (!seg.img.complete) continue;
+
+  const scale = 260 / seg.img.height;
+  const width = seg.img.width * scale;
+
+  // if off screen
+  if (seg.x + width < -240) {
+    // find rightmost segment
+    let maxX = Math.max(...nearSegments.map(s => s.x));
+
+    // move to right
+    seg.x = maxX + width;
+
+    // randomize next image
+    seg.img = nearImages[Math.floor(Math.random() * nearImages.length)];
+  }
+}
+
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    obstacles[i].x -= speed;
+    if (obstacles[i].x + obstacles[i].w < -20) obstacles.splice(i, 1);
+  }
+
+  const last = obstacles[obstacles.length - 1];
+  if (!last || last.x < CANVAS_WIDTH - rand(OBSTACLE_MIN_GAP, OBSTACLE_MAX_GAP)) {
+    const newObs = createObstaclePattern(CANVAS_WIDTH + 60);
+    obstacles.push(...newObs);
+  }
+
+  score++;
+  if (score % 6 === 0) scoreVal.textContent = Math.floor(score / 6);
+
+  for (const obs of obstacles) {
+    if (checkCollision(player, obs)) {
+      particles.push(...createParticleBurst(
+        player.x + PLAYER_W / 2, player.y + PLAYER_H / 2, C.crimson, 28
+      ));
+      const finalScore = Math.floor(score / 6);
+      if (finalScore > highScore) {
+        highScore = finalScore;
+        bestVal.textContent = highScore;
+      }
+      showDead(finalScore);
+      return;
+    }
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.x    += pt.vx;
+    pt.y    += pt.vy;
+    pt.vy   += 0.18;
+    pt.life -= pt.decay;
+    if (pt.life <= 0) particles.splice(i, 1);
+  }
+
+  const sr = speed / INITIAL_SPEED;
+  farBgX -= 0.4 * sr;   // slower
+  // nearBgX -= 1.0 * sr;  // faster
+  for (let seg of nearSegments) {
+  seg.x -= 1.0 * sr;
+}
+  roadX -=   1.0 * sr; //speed * 0.9; 
+
+  for (const c of bgClouds) {
+    c.x -= c.speed * sr;
+    if (c.x + 120 * c.scale < 0) c.x = CANVAS_WIDTH + rand(0, 100);
+  }
+
+  for (const k of bgKites) {
+    k.x -= k.speed * sr;
+    k.sway += k.swaySpeed;
+    if (k.x < -60) k.x = CANVAS_WIDTH + rand(20, 100);
+  }
+
+  for (const p of petals) {
+    p.x   += p.vx * sr;
+    p.y   += p.vy;
+    p.rot += p.rotV;
+    if (p.y > GROUND_Y - 10 || p.x < -20) {
+      p.x = rand(0, CANVAS_WIDTH);
+      p.y = rand(-40, 20);
+    }
+  }
+
+  for (const a of alpona) {
+    a.x -= speed * 0.9;
+    if (a.x < -60) a.x += CANVAS_WIDTH + 100;
+  }
+}
+
+// ============================================================
+// DRAW HELPERS
+// ============================================================
+function drawSkyImage() {
+  if (!skyImg.complete || !skyImg.width || !skyImg.height) return;
+  ctx.drawImage(skyImg, 0, 0, CANVAS_WIDTH, GROUND_Y+200);
+}
+
+function drawSun() {
+  const sunSize = 100; // increase/decrease size here
+  const sunX = 700;    // horizontal position
+  const sunY = 0;     // vertical position
+
+  ctx.drawImage(sunImg, sunX, sunY, sunSize, sunSize);
+}
+
+function drawCloud(cx, cy, sc) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(sc, sc * 0.75);
+  ctx.fillStyle = "rgba(255,248,231,0.82)";
+  for (const [ox, oy, r] of [
+    [0,0,22], [-26,-6,16], [26,-6,17], [-12,-16,14], [14,-14,15],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(ox, oy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawNearSegments(y, height) {
+  for (let seg of nearSegments) {
+    if (!seg.img.complete || !seg.img.width) continue;
+
+    const scale = height / seg.img.height;
+    const drawWidth = seg.img.width * scale;
+
+    ctx.drawImage(seg.img, seg.x, y, drawWidth, height);
+  }
+}
+
+function drawKite(k) {
+  ctx.save();
+  const ky = k.y + Math.sin(k.sway) * 8;
+  ctx.translate(k.x, ky);
+
+  ctx.fillStyle = k.color;
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  ctx.moveTo(0, -18);
+  ctx.lineTo(12, 0);
+  ctx.lineTo(0, 22);
+  ctx.lineTo(-12, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(0,0,0,0.25)";
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(0,22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(12,0); ctx.stroke();
+
+  ctx.globalAlpha = 0.4;
+  ctx.strokeStyle = "#5C3A1E";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(0, 22);
+  ctx.quadraticCurveTo(12, 50, 8, 80);
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawPetal(p) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rot);
+  ctx.globalAlpha = p.alpha;
+  ctx.fillStyle = p.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, p.size * 0.45, p.size, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawGround() {
+  const roadHeight = 450;
+  const roadY = CANVAS_HEIGHT - roadHeight;
+  roadX = drawRepeatingImage(roadImg, roadX, roadY, roadHeight); //hehe
+}
+
+function drawPlayer(p) {
+  ctx.save();
+  const cx = p.x + PLAYER_W / 2;
+  const cy = p.y + PLAYER_H / 2;
+  ctx.translate(cx, cy);
+  ctx.rotate(p.rotation);
+  ctx.scale(
+    1 + (p.scaleX - 1) * 0.35,
+    1 + (p.scaleY - 1) * 0.35
+  );
+  ctx.translate(-PLAYER_W / 2, -PLAYER_H / 2);
+
+  const leg = p.isOnGround ? Math.sin(p.legPhase) * 9 : 0;
+
+  ctx.fillStyle = "#FFF8E7";
+  ctx.beginPath(); ctx.roundRect(5, 33, 9, 15 - leg, 2); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(17, 33, 9, 15 + leg, 2); ctx.fill();
+
+  ctx.fillStyle = C.crimson;
+  ctx.beginPath(); ctx.roundRect(3, 14, 26, 22, 3); ctx.fill();
+
+  ctx.fillStyle = "#FFF8E7";
+  ctx.fillRect(12, 14, 8, 5);
+
+  ctx.strokeStyle = "#C68642";
+  ctx.lineWidth   = 3.5;
+  ctx.lineCap     = "round";
+  ctx.beginPath();
+  ctx.moveTo(3, 18);
+  ctx.lineTo(-5, 26 + leg * 0.4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(29, 18);
+  ctx.lineTo(37, 26 - leg * 0.4);
+  ctx.stroke();
+
+  ctx.fillStyle = "#C68642";
+  ctx.beginPath(); ctx.arc(16, 10, 10, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = C.turmeric;
+  ctx.beginPath();
+  ctx.moveTo(6, 5);
+  ctx.lineTo(16, -5);
+  ctx.lineTo(26, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = C.crimson;
+  ctx.fillRect(6, 4, 20, 3);
+
+  ctx.fillStyle = "#2C1810";
+  ctx.fillRect(11, 8, 3, 3);
+  ctx.fillRect(19, 8, 3, 3);
+
+  if (p.isOnGround) {
+    ctx.strokeStyle = "#2C1810";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(16, 13, 4, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawParallaxImage(img, x, y, height) {
+  if (!img.complete || !img.width || !img.height) return x;
+
+  const scale = height / img.height;
+  const drawWidth = img.width * scale;
+
+  // normalize x so it stays inside one image-width range
+  while (x <= -drawWidth) x += drawWidth;
+  while (x > 0) x -= drawWidth;
+
+  // draw enough copies to fully cover canvas
+  let currentX = x;
+  while (currentX < CANVAS_WIDTH) {
+    ctx.drawImage(img, currentX, y, drawWidth, height);
+    currentX += drawWidth;
+  }
+
+  return x;
+}
+function drawRepeatingImage(img, x, y, height) {
+  if (!img.complete || !img.width || !img.height) return x;
+
+  const scale = height / img.height;
+  const drawWidth = img.width * scale;
+
+  while (x <= -drawWidth) x += drawWidth;
+  while (x > 0) x -= drawWidth;
+
+  let currentX = x;
+  while (currentX < CANVAS_WIDTH) {
+    ctx.drawImage(img, currentX, y, drawWidth, height);
+    currentX += drawWidth;
+  }
+
+  return x;
+}
+
+function drawObstacle(o) {
+  ctx.save();
+  ctx.translate(o.x, o.y);
+
+  if (o.type === "pot") {
+    ctx.fillStyle = "#B5531A";
+    ctx.beginPath();
+    ctx.ellipse(14, 28, 14, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#8B3A10";
+    ctx.fillRect(7, 6, 14, 10);
+
+    ctx.fillStyle = "#5C2A08";
+    ctx.beginPath();
+    ctx.ellipse(14, 6, 10, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = C.turmeric;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(14, 26, 8, 0.4, Math.PI - 0.4);
+    ctx.stroke();
+
+  } else if (o.type === "boat") {
+    ctx.fillStyle = "#6B3A18";
+    ctx.beginPath();
+    ctx.moveTo(0, 18);
+    ctx.quadraticCurveTo(27, 38, 54, 18);
+    ctx.lineTo(50, 26);
+    ctx.quadraticCurveTo(27, 40, 4, 26);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(0,0,0,0.2)";
+    ctx.lineWidth = 1;
+    for (let lx = 10; lx < 50; lx += 12) {
+      ctx.beginPath();
+      ctx.moveTo(lx, 26);
+      ctx.lineTo(lx, 32);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = "#4A2810";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(27, 18); ctx.lineTo(27, 0); ctx.stroke();
+
+    ctx.fillStyle = C.crimson;
+    ctx.beginPath();
+    ctx.moveTo(27, 0);
+    ctx.lineTo(48, 10);
+    ctx.lineTo(27, 20);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,248,231,0.6)";
+    ctx.beginPath();
+    ctx.moveTo(27, 0);
+    ctx.lineTo(38, 8);
+    ctx.lineTo(27, 14);
+    ctx.closePath();
+    ctx.fill();
+
+  } else if (o.type === "rangoli") {
+    for (let i = 3; i >= 0; i--) {
+      ctx.strokeStyle = [C.crimson, C.turmeric, C.saffron, "#FFF8E7"][i];
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.arc(16, 16, 14 - i * 3.2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (let j = 0; j < 6; j++) {
+      const a = (j / 6) * Math.PI * 2;
+      ctx.fillStyle = [C.crimson, C.turmeric, C.saffron][j % 3];
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.ellipse(
+        16 + Math.cos(a) * 12, 16 + Math.sin(a) * 12,
+        3.5, 6, a, 0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = C.crimson;
+    ctx.beginPath(); ctx.arc(16, 16, 4, 0, Math.PI * 2); ctx.fill();
+
+  } else if (o.type === "banner") {
+    ctx.strokeStyle = "#7B4F1E";
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(11, 68); ctx.stroke();
+
+    const stripColors = [C.crimson, C.turmeric, C.saffron, C.green, C.crimson];
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = stripColors[i];
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(11, i * 13 + 4);
+      ctx.lineTo(22, i * 13 + 8);
+      ctx.lineTo(22, i * 13 + 18);
+      ctx.lineTo(11, i * 13 + 14);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+  } else if (o.type === "drum") {
+    ctx.fillStyle = "#8B3A2A";
+    ctx.beginPath();
+    ctx.ellipse(18, 21, 18, 21, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#D4A060";
+    ctx.beginPath(); ctx.ellipse(18, 3, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(18, 39, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = "#5C2A0A";
+    ctx.lineWidth = 1;
+    for (let s = -1; s <= 1; s += 2) {
+      ctx.beginPath();
+      ctx.moveTo(18 + s * 10, 3);
+      ctx.quadraticCurveTo(18 + s * 16, 21, 18 + s * 10, 39);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = C.turmeric;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(18, 21, 12, 6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// ============================================================
+// DRAW
+// ============================================================
+function draw() {
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  drawSkyImage();
+  drawSun();
+  for (const c of bgClouds) drawCloud(c.x, c.y, c.scale);
+  farBgX = drawParallaxImage(farBgImg, farBgX, GROUND_Y - 320, 300); //hoho field in background
+  drawNearSegments(-0, 400);
+
+  // for (const c of bgClouds) drawCloud(c.x, c.y, c.scale);
+  for (const k of bgKites) drawKite(k);
+  for (const p of petals) drawPetal(p);
+
+  drawGround();
+
+  for (const obs of obstacles) drawObstacle(obs);
+
+  drawPlayer(player);
+
+  for (const pt of particles) {
+    ctx.save();
+    ctx.globalAlpha = pt.life;
+    ctx.fillStyle   = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+function loop() {
+  update();
+  draw();
+  animFrameId = requestAnimationFrame(loop);
+}
+
+// ============================================================
+// INPUT HANDLING
+// ============================================================
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" || e.code === "ArrowUp") {
+    e.preventDefault();
+    handleAction();
+  }
+});
+
+canvas.addEventListener("click", handleAction);
+canvas.addEventListener("touchstart", e => {
+  e.preventDefault();
+  handleAction();
+}, { passive: false });
+
+document.getElementById("btn-start").addEventListener("click", e => {
+  e.stopPropagation();
+  startGame();
+});
+
+document.getElementById("btn-restart").addEventListener("click", e => {
+  e.stopPropagation();
+  startGame();
+});
+
+function handleAction() {
+  if (gameState === "playing") jump();
+  else startGame();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+player    = createPlayer();
+obstacles = [];
+particles = [];
+trails    = [];
+speed     = INITIAL_SPEED;
+frame     = 0;
+
+
+loop();
+</script>
+</body>
+</html>
